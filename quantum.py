@@ -465,5 +465,5 @@ s = apply(s,[2,3],c_half_not)
 # then apply half not on the received qubits
 s = apply(s,[1],sx)
 s = apply(s,[2],sx)
-#print_state(s)
-# the result is that exactly one node will measure 10, and exactly one will measure 00 or 11
+print_state(s)
+# the result is that exactly one node will measure 10 or 01, and exactly one will measure 00 or 11
