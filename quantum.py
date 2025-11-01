@@ -49,7 +49,15 @@ c_half_not = np.array([[1,0,0,0],
                        [0,0,0.5 + 0.5*j,0.5 - 0.5*j],
                        [0,0,0.5 - 0.5*j,0.5 + 0.5*j]])
 
-sx = np.array([[(1+j)/2,(1-j)/2],[(1-j)/2,(1+j)/2]])
+sx = np.array([[(1+j)/2,(1-j)/2],
+               [(1-j)/2,(1+j)/2]])
+
+swap = np.array([
+    [1,0,0,0],
+    [0,0,1,0],
+    [0,1,0,0],
+    [0,0,0,1]
+])
 
 ### A quantum state of b qubits is a "vertical" array, i.e. a column vector, of length 2^qubits, 
 ### where each element is a complex number called amplitude, 
@@ -451,8 +459,9 @@ s = apply(s,[0],hadamard)
 s = from_amplitudes([(0,1.0)],4)
 s = apply(s,[0],hadamard)
 s = apply(s,[3],hadamard)
-s = apply(s,[0,2],cnot)
-s = apply(s,[3,1],cnot)
+s = apply(s,[0,1],cnot)
+s = apply(s,[3,2],cnot)
+s = apply(s,[1,2],swap)
 #print_state(s)
 # apply cnot, using the own bit as control 
 s = apply(s,[0,1],cnot)
