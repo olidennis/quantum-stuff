@@ -44,6 +44,13 @@ identity = np.array([[1, 0],
 s_dagger = np.array([[1, 0],
                     [0, -j]])
 
+c_half_not = np.array([[1,0,0,0],
+                       [0,1,0,0],
+                       [0,0,0.5 + 0.5*j,0.5 - 0.5*j],
+                       [0,0,0.5 - 0.5*j,0.5 + 0.5*j]])
+
+sx = np.array([[(1+j)/2,(1-j)/2],[(1-j)/2,(1+j)/2]])
+
 ### A quantum state of b qubits is a "vertical" array, i.e. a column vector, of length 2^qubits, 
 ### where each element is a complex number called amplitude, 
 ### and such that the 2-norm of the vector is 1
@@ -69,6 +76,8 @@ def probabilities(state):
 
 ### this function computes the kronecker (or tensor) product of the given matrices
 def combine(list):
+    if len(list) == 1:
+        return list[0]
     r = np.kron(list[0],list[1])
     for m in list[2:]:
         r = np.kron(r,m)
@@ -82,8 +91,6 @@ def combine(list):
 ### it first permutes the qubits, so that the b required bits are in the first positions and in the correct order,
 ### then applies gate  ⊗ identity ⊗ ... ⊗ identity, then undoes the permutation
 def compute_u(gate,bits,n):
-    if len(bits) == n:
-        return gate
     # if we need to apply some matrix on the i-th qubit,
     # we compute identity ⊗ identity ⊗ ... ⊗ identity ⊗ matrix ⊗ identity ⊗ ... ⊗ identity
     # where the matrix is in the i-th position
@@ -99,11 +106,20 @@ def compute_u(gate,bits,n):
             v = [0]*n
             for j in range(0,n):
                 v[j] = (i>>(n-1-j)) % 2
+            w = [0]*n
             for j in range(0,len(bits)):
-                v[j],v[bits[j]] = v[bits[j]],v[j]
+                w[bits[j]] = 1
+            z = [0]*n
+            for j in range(0,len(bits)):
+                z[j] = v[bits[j]]
+            k = len(bits)
+            for j in range(0,n):
+                if w[j] == 0 :
+                    z[k] = v[j]
+                    k += 1
             new_pos = 0
             for j in range(0,n):
-                new_pos = 2*new_pos + v[j]
+                new_pos = 2*new_pos + z[j]
             swap_inv[i][new_pos] = 1
         ops = [gate]
         for i in range(0,n-len(bits)):
@@ -425,3 +441,29 @@ s = apply(s,[0],hadamard)
 ### In particular, it looks like that bits 0 and 3 are never affected by what Charlie does
 ### But this is false, because if Charlie does something then the measurement gives 00 or 11, and if Charlie does nothing then the measurement gives 00 or 01
 
+
+
+
+
+########
+### quantum symmetry breaking
+### first, prepare 2 bell pairs, and exhange half pairs
+s = from_amplitudes([(0,1.0)],4)
+s = apply(s,[0],hadamard)
+s = apply(s,[3],hadamard)
+s = apply(s,[0,2],cnot)
+s = apply(s,[3,1],cnot)
+#print_state(s)
+# apply cnot, using the own bit as control 
+s = apply(s,[0,1],cnot)
+s = apply(s,[3,2],cnot)
+#print_state(s)
+# then apply half cnot in the opposite direction
+s = apply(s,[1,0],c_half_not)
+s = apply(s,[2,3],c_half_not)
+#print_state(s)
+# then apply half not on the received qubits
+s = apply(s,[1],sx)
+s = apply(s,[2],sx)
+#print_state(s)
+# the result is that exactly one node will measure 10, and exactly one will measure 00 or 11
